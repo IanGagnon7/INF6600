@@ -12,7 +12,7 @@ HOST = '192.168.56.128'  # Server local IP address
 PORT = 37777        # Port to listen on (non-privileged ports are > 1023)
 MAX_TIME_S = 5
 SIMU_END = '\x03'
-MSGLEN = 12
+MSGLEN = 64
 
 # Points that delimited the field
 X = [10, 10, 18, 18, 46, 46, 60, 60]
