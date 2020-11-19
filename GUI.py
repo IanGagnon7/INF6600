@@ -107,7 +107,7 @@ class DroneApp(QtWidgets.QMainWindow):
     def parseData(self, dataStr):
         dataArray = [float(data) for data in dataStr.strip().split(',')]
         print(dataArray)
-        self.memory = round(dataArray[0]/10e9)
+        self.memory = round(dataArray[0]/10e6)
         self.battery = round(dataArray[1], 1)
         self.xPos = round(dataArray[2], 2)
         self.yPos = round(dataArray[3], 2)
