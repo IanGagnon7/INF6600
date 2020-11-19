@@ -7,8 +7,8 @@ import socket
 import sys
 
 # Server informations
-# HOST = '192.168.56.129'  # Server local IP address
-HOST = '127.0.0.1'  # Server local IP address
+HOST = '192.168.56.128'  # Server local IP address
+# HOST = '127.0.0.1'  # Server local IP address
 PORT = 37777        # Port to listen on (non-privileged ports are > 1023)
 MAX_TIME_S = 5
 SIMU_END = '\x03'
@@ -105,13 +105,13 @@ class DroneApp(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot(str)
     def parseData(self, dataStr):
-        dataArray = [int(data) for data in dataStr.strip().split(',')]
+        dataArray = [float(data) for data in dataStr.strip().split(',')]
         print(dataArray)
-        self.memory = dataArray[0]
-        self.battery = dataArray[1]
-        self.xPos = dataArray[2] 
-        self.yPos = dataArray[3]
-        self.zPos = dataArray[4]
+        self.memory = round(dataArray[0]/10e9)
+        self.battery = round(dataArray[1], 1)
+        self.xPos = round(dataArray[2], 2)
+        self.yPos = round(dataArray[3], 2)
+        self.zPos = round(dataArray[4], 2)
         self.updateAll()
 
     def createMap(self):
@@ -139,7 +139,7 @@ class DroneApp(QtWidgets.QMainWindow):
 
     def updateZ(self):
         self.zSlider.setValue(round(10*self.zPos))
-        self.zValue.setText(f"{self.zPos:3.2f} m")
+        self.zValue.setText(f"{self.zPos:3} m")
 
     def updateBattery(self):
         if (self.battery <= 10):
@@ -148,8 +148,8 @@ class DroneApp(QtWidgets.QMainWindow):
             self.batteryProgressBar.setStyleSheet("QProgressBar::chunk {background-color: #dddd00;}")
         else:
             self.batteryProgressBar.setStyleSheet("QProgressBar::chunk {background-color: #00aa00;}")
-        self.batteryValue.setText(f"{self.battery:3}%")
-        self.batteryProgressBar.setValue(self.battery)
+        self.batteryValue.setText(f"{self.battery:4}%")
+        self.batteryProgressBar.setValue(10*self.battery)
 
     def updateMemory(self):
         if (self.memory >= 500):

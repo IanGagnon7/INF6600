@@ -200,6 +200,9 @@
             <property name="styleSheet">
              <string notr="true">background-color: rgb(0, 170, 0);</string>
             </property>
+            <property name="maximum">
+             <number>1000</number>
+            </property>
             <property name="value">
              <number>24</number>
             </property>
