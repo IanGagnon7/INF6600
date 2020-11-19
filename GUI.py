@@ -84,7 +84,6 @@ class DroneApp(QtWidgets.QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.testPushButton.clicked.connect(self.updateAll)
         self.connectPushButton.clicked.connect(self.connectDrone)
         self.createMap()
         self.updateBattery()
