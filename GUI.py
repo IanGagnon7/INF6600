@@ -7,72 +7,79 @@ import socket
 import sys
 
 # Server informations
-# HOST = '192.168.2.16'  # Server local IP address
-# HOST = '127.0.0.1'     # Localhost
-HOST = '192.168.56.1'     # Localhost
-
+# HOST = '192.168.56.129'  # Server local IP address
+HOST = '127.0.0.1'  # Server local IP address
 PORT = 37777        # Port to listen on (non-privileged ports are > 1023)
-MAX_TIME_S = 20
+MAX_TIME_S = 5
+SIMU_END = '\x03'
+MSGLEN = 12
 
 # Points that delimited the field
 X = [10, 10, 18, 18, 46, 46, 60, 60]
 Y = [10, 50, 50, 80, 80, 50, 50, 10]
 
-class DroneServer(QtCore.QObject):
+class DroneClient(QtCore.QObject):
     connectionStatus = QtCore.pyqtSignal(str)
-    data = QtCore.pyqtSignal(str)
+    dataStr = QtCore.pyqtSignal(str)
     def __init__(self):
-        super(DroneServer, self).__init__()
-        self.conn = None
+        super(DroneClient, self).__init__()
+        self.s = None
 
     @QtCore.pyqtSlot()
-    def launch(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind((HOST, PORT))
-            s.settimeout(MAX_TIME_S)
-            s.listen()
-            try:
-                self.conn, addr = s.accept()
-            except socket.timeout:
-                self.connectionStatus.emit(f" Timeout after {MAX_TIME_S} sec")
-            else:
-                self.connectionStatus.emit(f" Connection made with {addr}")
+    def connect_to_server(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.s.connect((HOST, PORT))
+        except (TimeoutError, ConnectionRefusedError):
+            self.connectionStatus.emit(f" Connection FAILED.")
+            self.s.close()
+        else:
+            self.s.sendall(b'Start')
+            self.s.settimeout(MAX_TIME_S)
+            self.connectionStatus.emit(f" Connection ESTABLISHED!")
 
     @QtCore.pyqtSlot()
     def receiveData(self):
-        with self.conn:
-            while True:
-                data = self.conn.recv(1024)
-                if not data:
-                    print('No data')
-                    break
-                self.data.emit(data.decode("utf-8"))
-                # self.conn.sendall(data)
-        
-
+        last_car = None
+        data = ""
+        while last_car != SIMU_END:
+            try:
+                chunk = self.s.recv(min(MSGLEN - len(data), 1024)).decode("utf-8")
+            except socket.timeout:
+                self.connectionStatus.emit(f" Connection LOST!")
+                break
+            data += chunk
+            last_car = data[-1]
+            if len(data) >= MSGLEN:
+                self.dataStr.emit(data)
+                data = ""
+        else:
+            self.connectionStatus.emit(f" Connection ENDED by the drone!")
+        self.s.close()
 
 class DroneApp(QtWidgets.QMainWindow):
-    launchServer = QtCore.pyqtSignal()
+    connectClient = QtCore.pyqtSignal()
     startReceivingData = QtCore.pyqtSignal()
     def __init__(self):
         # Init Qt object
         super(DroneApp, self).__init__()
         uic.loadUi('GUI.ui', self)
         # Init server and connect signals & slots AFTER moving the object to the thread
-        self.server = DroneServer()
-        self.serverThread = QtCore.QThread()
-        self.server.moveToThread(self.serverThread)
-        self.serverThread.start()  
-        self.launchServer.connect(self.server.launch)
-        self.server.connectionStatus.connect(self.checkConnection)
-        self.startReceivingData.connect(self.server.receiveData)
-        self.server.data.connect(self.parseData)
+        self.client = DroneClient()
+        self.clientThread = QtCore.QThread()
+        self.client.moveToThread(self.clientThread)
+        self.clientThread.start()  
+        self.connectClient.connect(self.client.connect_to_server)
+        self.client.connectionStatus.connect(self.checkConnection)
+        self.startReceivingData.connect(self.client.receiveData)
+        self.client.dataStr.connect(self.parseData)
         # Init data
+        self.memory = 0
+        self.battery = 100
         self.xPos = 0
         self.yPos = 0
         self.zPos = 0
-        self.battery = 100
-        self.memory = 0
+        
         # Init UI
         self.initUI()
 
@@ -88,18 +95,24 @@ class DroneApp(QtWidgets.QMainWindow):
 
     def connectDrone(self):
         self.connectionInfo.setText(" Waiting for a connection...")
-        self.launchServer.emit()
+        self.connectClient.emit()
 
     @QtCore.pyqtSlot(str)
     def checkConnection(self, connectionStatus):
         self.connectionInfo.setText(connectionStatus)
-        if ("Timeout" not in connectionStatus):
+        if 'ESTABLISHED' in connectionStatus:
             self.startReceivingData.emit()
 
     @QtCore.pyqtSlot(str)
-    def parseData(self, data):
-        print(data)
-        # Parse data here   
+    def parseData(self, dataStr):
+        dataArray = [int(data) for data in dataStr.strip().split(',')]
+        print(dataArray)
+        self.memory = dataArray[0]
+        self.battery = dataArray[1]
+        self.xPos = dataArray[2] 
+        self.yPos = dataArray[3]
+        self.zPos = dataArray[4]
+        self.updateAll()
 
     def createMap(self):
         self.map.canvas.axes.clear()
@@ -115,14 +128,9 @@ class DroneApp(QtWidgets.QMainWindow):
         self.map.canvas.draw()
 
     def updateAll(self):
-        self.xPos += 5
-        self.yPos += 5.5
         self.updateXY()
-        self.zPos += 0.5
         self.updateZ()
-        self.battery -= 5
         self.updateBattery()
-        self.memory += 20
         self.updateMemory()
 
     def updateXY(self):
