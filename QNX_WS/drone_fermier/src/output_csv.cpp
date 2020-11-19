@@ -3,6 +3,8 @@
 
 using namespace std;
 
+#define TCP_PACKET_SIZE 64 // La communication TCP utilise une taille de paquet fixe
+
 const char * const to_string(bool b)
 {
   return b ? "1" : "0";
@@ -31,6 +33,18 @@ void outputLine(ofstream &csvFile, unsigned int msTime, SysContinu* sys, struct 
     ControleurNavigation* cn = tsk->p_ctrlNavigation;
     long long memoireLibre = cc->tailleMemoire - cc->memoireOffset.load();
     coord_t dest = cn->destination.load();
+
+    // TRANSFERER LES DONNEES AU GUI (data = MEM, BATT, X, Y, Z)
+    if (sys->get_socket() != -1){
+		char* data_char_arr;
+		string data_str = to_string(cc->memoireOffset.load())+","+to_string(sys->get_niv_batterie())+","+to_string(posxy.x)+","+to_string(posxy.y)+","+to_string(sys->get_posz());
+		while (data_str.length() < TCP_PACKET_SIZE){
+			data_str += " "; // Ajouter des espaces jusqu'a ce que le paquet soit de la bonne taille
+		}
+		data_char_arr = &data_str[0];
+		send(sys->get_socket() , data_char_arr , TCP_PACKET_SIZE , 0 );
+    }
+
 
     csvFile<<to_string(msTime)<<","<<to_string(sys->get_niv_batterie())<<","<<to_string(posxy.x)<<","<<to_string(posxy.y)<<","<<to_string(sys->get_posz())<<","<<
              to_string(sys->get_orientation())<<","<<to_string(sys->get_vitesse_h())<<","<<to_string(sys->get_vitesse_v())<<","<<to_string(sys->transmissionEnCours.load())<<","<<to_string(sys->batterieEnCharge.load())<<","<<

@@ -31,7 +31,7 @@ class SysContinu
 public:
 	/*Les handlers de batterie doivent être < 5ms pour ne pas perturber l'opérations des tâches.*/
 	SysContinu(void (*handler_batterie_10)(void), void (*handler_batterie_100)(void),
-			void (*handler_photo_transmise)(void));
+			void (*handler_photo_transmise)(void), int socket_number);
 
 	//public API
 	void set_charger_batterie();
@@ -48,9 +48,12 @@ public:
 	double get_orientation();
 	double get_vitesse_h();
 	double get_vitesse_v();
+	int get_socket();
 
 	//file de messages
 	nsCommon::Queue<message_t> msgQId;
+	// Socket pour communication TCP
+	int socket_num;
 
 	//variables d'état locales à sys_continu.cpp
 	//inputs
@@ -74,6 +77,7 @@ public:
 	std::atomic<bool> prendrePhotoEnCours;
 	std::atomic<bool> batterieFaibleFired;
 	std::atomic<vitesse_t> vxy;
+
 
 	PathMap cameraModule;
 

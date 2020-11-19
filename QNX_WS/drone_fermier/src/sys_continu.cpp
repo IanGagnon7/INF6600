@@ -375,8 +375,8 @@ void batterie_cont(SysContinu* sys)
 
 
 SysContinu::SysContinu(void (*handler_batterie_10)(void), void (*handler_batterie_100)(void),
-    void (*handler_photo_transmise)(void))
-	:msgQId(MAX_NUM_MESSAGES), csvFile("simulationResult.csv", std::ofstream::trunc)
+    void (*handler_photo_transmise)(void), int socket_number)
+	:msgQId(MAX_NUM_MESSAGES), csvFile("simulationResult.csv", std::ofstream::trunc), socket_num(socket_number)
     {
         this->batterie_10_handler = handler_batterie_10;
         this->batterie_100_handler = handler_batterie_100;
@@ -523,3 +523,9 @@ double SysContinu::get_vitesse_v()
 {
     return this->vitesse_v.load();
 }
+
+int SysContinu::get_socket()
+{
+	return this->socket_num;
+}
+

@@ -39,7 +39,7 @@ CCFLAGS_all += $(CCFLAGS_$(BUILD_PROFILE))
 #CCFLAGS_all += -fPIC
 LDFLAGS_all += $(LDFLAGS_$(BUILD_PROFILE))
 LIBS_all += $(LIBS_$(BUILD_PROFILE))
-LIBS += -latomic
+LIBS += -latomic -lsocket
 DEPS = -Wp,-MMD,$(@:%.o=%.d),-MT,$@
 
 #Macro to expand files recursively: parameters $1 -  directory, $2 - extension, i.e. cpp

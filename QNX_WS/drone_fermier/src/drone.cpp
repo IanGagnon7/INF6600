@@ -14,6 +14,15 @@
 #include "sys_continu.h"
 #include "drone.h"
 #include <float.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <unistd.h>
+
+
+#define PORT    	37777
+#define MAXLINE 1024
+#define SIMU_END "\x03"
 
 #define PAS_DE_SIMULATION 10E-3
 #define PI 3.141592
@@ -330,7 +339,7 @@ void* ctrl_nav_function(void* arg) {
 }
 
 //fonction init du noyau
-void init(){
+void init(int socket_number){
 	cout << "Start init simulation" << endl << endl;
     g_data = new struct TaskData();
     memset( g_data, 0, sizeof(TaskData) );
@@ -362,7 +371,7 @@ void init(){
     g_data->p_ctrlMission = new struct ControleurMission;
     //les valeurs du struct controleurMission n'ont pas besoin d'être initialisé vu que l'on est assuré qu'ils seront écrits avant d'être lu par la machine à état du controleur.
 
-    g_sys =  new SysContinu(handler_batterie_10, handler_batterie_100, handler_photo_transmise);
+    g_sys =  new SysContinu(handler_batterie_10, handler_batterie_100, handler_photo_transmise, socket_number);
 
     pthread_attr_t pthread_attr_ctrl_camera;
     pthread_attr_t pthread_attr_ctrl_navigation;
@@ -413,8 +422,62 @@ void cleanup() {
     cout << "Simulation ended" << endl;
 }
 
+int start_server(){
+	int server_fd, new_socket;
+	struct sockaddr_in address;
+	int opt = 1;
+	int addrlen = sizeof(address);
+	char buffer[1024] = {0};
+
+	// Creating socket file descriptor
+	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+	{
+		perror("socket failed");
+		exit(EXIT_FAILURE);
+	}
+
+	// Forcefully attaching socket to the port 37777
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
+	{
+		perror("setsockopt");
+		exit(EXIT_FAILURE);
+	}
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_port = htons( PORT );
+
+	printf("Binding socket to port %i\n", PORT);
+
+	if (::bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
+	{
+		perror("bind failed");
+		exit(EXIT_FAILURE);
+	}
+	printf("Binding SUCCESSFUL! \n");
+	if (listen(server_fd, 3) < 0)
+	{
+		perror("listen");
+		exit(EXIT_FAILURE);
+	}
+	printf("Waiting for a connection on port %i\n", PORT);
+	if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
+	{
+		perror("accept");
+		exit(EXIT_FAILURE);
+	}
+	printf("Connection ESTABLISHED!\n");
+	read( new_socket , buffer, 1024);
+	printf("Message from base: %s\n",buffer );
+//	char hello[] = "Hello from server";
+//	send(new_socket , hello , strlen(hello) , 0 );
+//	printf("Hello message sent\n");
+	return new_socket;
+}
+
 int main() {
-	init();
+	int socket_num = start_server();
+
+	init(socket_num);
 
 	time_t t, temps_debut;
 	time(&t);
@@ -426,5 +489,7 @@ int main() {
 	}
 	// Fin de simulation
 	cleanup();
+	send(socket_num , SIMU_END , strlen(SIMU_END) , 0 );
+
 	return 0;
 }
