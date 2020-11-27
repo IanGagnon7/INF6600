@@ -1,1 +1,5 @@
 .metadata/
+__pycache__/mathpltwidget.cpython-38.pyc
+article.synctex.gz
+article.log
+article.aux
