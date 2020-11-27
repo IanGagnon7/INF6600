@@ -20,9 +20,10 @@
 #include <unistd.h>
 
 
-#define PORT    	37777
-#define MAXLINE 1024
-#define SIMU_END "\x03"
+#define PORT              37777
+#define SOCKET_TIMEOUT_S  10
+#define MAXLINE           1024
+#define SIMU_END          "\x03"
 
 #define PAS_DE_SIMULATION 10E-3
 #define PI 3.141592
@@ -422,6 +423,11 @@ void cleanup() {
     cout << "Simulation ended" << endl;
 }
 
+int start_server_failed(){
+	printf("Simulation will continue without GUI functionality.\n\n");
+	return -1;
+}
+
 int start_server(){
 	int server_fd, new_socket;
 	struct sockaddr_in address;
@@ -432,15 +438,15 @@ int start_server(){
 	// Creating socket file descriptor
 	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
 	{
-		perror("socket failed");
-		exit(EXIT_FAILURE);
+		perror("socket");
+		return start_server_failed();
 	}
 
 	// Forcefully attaching socket to the port 37777
 	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
 	{
 		perror("setsockopt");
-		exit(EXIT_FAILURE);
+		return start_server_failed();
 	}
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
@@ -450,35 +456,52 @@ int start_server(){
 
 	if (::bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
 	{
-		perror("bind failed");
-		exit(EXIT_FAILURE);
+		perror("bind");
+		return start_server_failed();
 	}
 	printf("Binding SUCCESSFUL! \n");
 	if (listen(server_fd, 3) < 0)
 	{
 		perror("listen");
-		exit(EXIT_FAILURE);
+		return start_server_failed();
 	}
+
+	if(fcntl(server_fd, F_SETFL, O_NONBLOCK) < 0){
+		perror("Unable to set socket in NON BLOCKING mode");
+		return start_server_failed();
+	}
+
 	printf("Waiting for a connection on port %i\n", PORT);
-	if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
-	{
-		perror("accept");
-		exit(EXIT_FAILURE);
+
+	time_t t, temps_debut;
+	time(&t);
+	time(&temps_debut);
+	while ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0){
+		time(&t);
+		if (difftime(t,temps_debut) > SOCKET_TIMEOUT_S){
+			printf("Connection FAILED, TIMEOUT REACHED!\n");
+			return start_server_failed();
+		}
+		sleep(1);
 	}
+
+	if(fcntl(server_fd, F_SETFL, ~O_NONBLOCK) < 0){
+		perror("Unable to reset socket in BLOCKING mode");
+		return start_server_failed();
+	}
+
 	printf("Connection ESTABLISHED!\n");
 	read( new_socket , buffer, 1024);
-	printf("Message from base: %s\n",buffer );
-//	char hello[] = "Hello from server";
-//	send(new_socket , hello , strlen(hello) , 0 );
-//	printf("Hello message sent\n");
+	printf("Message from base: %s\n\n",buffer );
 	return new_socket;
 }
 
 int main() {
+	// Initialisation
 	int socket_num = start_server();
-
 	init(socket_num);
 
+	// Attendre fin de la simulation
 	time_t t, temps_debut;
 	time(&t);
 	time(&temps_debut);
@@ -487,9 +510,10 @@ int main() {
 		sleep(1);
 		time(&t);
 	}
+
 	// Fin de simulation
+	send(socket_num , SIMU_END , strlen(SIMU_END) , 0 ); // Send SIMU_END message to the GUI
 	cleanup();
-	send(socket_num , SIMU_END , strlen(SIMU_END) , 0 );
 
 	return 0;
 }
