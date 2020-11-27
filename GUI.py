@@ -7,7 +7,7 @@ import socket
 import sys
 
 # Server informations
-HOST = '192.168.56.128'  # Server local IP address
+HOST = '192.168.56.130'  # Server local IP address
 # HOST = '127.0.0.1'  # Server local IP address
 PORT = 37777        # Port to listen on (non-privileged ports are > 1023)
 MAX_TIME_S = 5
@@ -34,7 +34,7 @@ class DroneClient(QtCore.QObject):
             self.connectionStatus.emit(f" Connection FAILED.")
             self.s.close()
         else:
-            self.s.sendall(b'Start')
+            self.s.sendall(b'Ready to receive data')
             self.s.settimeout(MAX_TIME_S)
             self.connectionStatus.emit(f" Connection ESTABLISHED!")
 
@@ -49,7 +49,11 @@ class DroneClient(QtCore.QObject):
                 self.connectionStatus.emit(f" Connection LOST!")
                 break
             data += chunk
-            last_car = data[-1]
+            try:
+                last_car = data[-1]
+            except IndexError:
+                self.connectionStatus.emit(f" Connection LOST!")
+                break
             if len(data) >= MSGLEN:
                 self.dataStr.emit(data)
                 data = ""
@@ -93,7 +97,7 @@ class DroneApp(QtWidgets.QMainWindow):
         # self.toggleButton.clicked.connect(self.clicked)
 
     def connectDrone(self):
-        self.connectionInfo.setText(" Waiting for a connection...")
+        self.connectionInfo.setText(f" Connecting with server on ('{HOST}', {PORT}) ...")
         self.connectClient.emit()
 
     @QtCore.pyqtSlot(str)
