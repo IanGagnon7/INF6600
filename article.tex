@@ -4,11 +4,11 @@
 %% 2015/08/26
 %% by Michael Shell
 %% see http://www.michaelshell.org/
-%% for current contact information.
+%% fores IEEEtran.cls version 1.8b or later) with an IEEE
+%% journar current contact information.
 %%
 %% This is a skeleton file demonstrating the use of IEEEtran.cls
-%% (requires IEEEtran.cls version 1.8b or later) with an IEEE
-%% journal paper.
+%% (requil paper.
 %%
 %% Support sites:
 %% http://www.michaelshell.org/tex/ieeetran/
@@ -58,6 +58,8 @@
 % correct bad hyphenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
 
+\usepackage{graphicx}
+\usepackage{caption}
 
 \begin{document}
 
@@ -72,7 +74,7 @@
 % As a general rule, do not put math, special symbols or citations
 % in the abstract or keywords.
 \begin{abstract}
-L'implémentation d'un système de contrôle de drone fermier a été réalisé progressivement tout au long de la session en commençant par un module TrueTime avec un système continu déjà implémenté en Simulink. Par la suite, l'implémentation a continué sur une machine virtuelle QNX roulant sous Vmware, avec certaines fonctions déjà fournies. Ce rapport focus sur ce qui a été fait sur cette base de code pour améliorer les aspects les plus importants. La première étape a été d'implémenter un système de log qui nous permettent de voir comment se comporte l'ordonnancement des tâches et la performance du système. Par la suite, malgré le manque de droits d'accès qui nous permettraient de comprendre l'ensemble des problèmes de performances, nous avons toutefois été capable de les mesurer et de les documenter. Un système graphique vivant en dehors de la machine virtuelle nous permettant de valider le comportement du système a aussi été implémenté.
+L'implémentation d'un système de contrôle de drone fermier a été réalisé progressivement tout au long de la session en commençant par un module TrueTime avec un système continu déjà implémenté en Simulink. Par la suite, l'implémentation a continué sur une machine virtuelle QNX roulant sous VMware, avec certaines fonctions déjà fournies. Ce rapport se concentre sur ce qui a été fait sur cette base de code pour améliorer les aspects les plus importants. La première étape a été d'implémenter un système de log qui nous permettent de voir comment se comporte l'ordonnancement des tâches et la performance du système. Par la suite, malgré le manque de droits d'accès qui nous permettraient de comprendre l'ensemble des problèmes de performances, nous avons toutefois été capable de les mesurer et de les documenter. Un système graphique vivant en dehors de la machine virtuelle nous permettant de valider le comportement du système a aussi été implémenté.
 \end{abstract}
 
 
@@ -166,6 +168,13 @@ Les pics des latences durent plusieurs millisecondes. Plusieurs tentatives de co
 
 \section{Améliorations apportées}
 \label{ameliorations}
+\begin{figure}
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=3.5in]{diagrammeDeTaches_Simple.pdf}
+	\caption{Diagramme de tâches du système}
+	\label{taskDiagram}
+\end{figure}
 
 \begin{figure}
   \includegraphics[width=\linewidth]{placeholder.png}
