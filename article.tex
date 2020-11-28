@@ -52,6 +52,8 @@
 
 \documentclass[journal]{IEEEtran}
 
+\usepackage{graphicx}
+
 
 % correct bad hyphenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
@@ -138,6 +140,7 @@ La machine virtuelle roule sous QNX 7.0 sous VMware Workstation avec un hôte Wi
 
 
 \section{Lacunes du système de base}
+\label{lacunes}
 
 Le système décrit plus haut a plusieurs lacunes importantes. Nous allons ici nous focaliser sur les trois principales faiblesses qui nous ont empêcher de réaliser correctement plusieurs améliorations auxquels nous avions pensés. Il va s'en dire que nous avons penser plus important de régler ces lacunes au meilleur de nos capacités en priorité.
 
@@ -160,9 +163,39 @@ Après avoir apportés les modifications qui seront détaillés à la section \r
 En plus d'affecter les performances du systèmes et de le rendre moins fiable, un impact important de ces pics de latences est que toutes les métriques de pire temps d'exécution ou de déviations standard sont affectés de manière aléatoire et qu'une comparaison avant et après d'une tentative d'amélioration est noyée dans le bruit de ces pics.
 
 Les pics des latences durent plusieurs millisecondes. Plusieurs tentatives de contourner le problème ont été essayé: réduire le nombre de cœurs du système de contrôle, augmenter le nombre de cœurs du système et déplacer la machine virtuelle du disque réseau au disque dur local. Déplacer la machine virtuelle à permis de réduire significativement la durée de ces pics, mais aucune des ces tentatives n'a permis de ramener les variations de latences à des temps raisonnables.
+
 \section{Améliorations apportées}
 \label{ameliorations}
 
+\begin{figure}
+  \includegraphics[width=\linewidth]{placeholder.png}
+  \caption{Diagramme des améliorations apportés}
+  \label{fig:ameliorations}
+\end{figure}
+
+Comme il est possible de le voir à la figure \ref{fig:ameliorations}, les améliorations ont été apportés au niveau du \textit{logging} et du \textit{monitoring} des tâches pour avoir des sorties de simulations faciles à interpréter et qui corrigent les deux premières lacunes décrites à la section \ref{lacunes}, le manque de lisibilité de ce qui se passe dans le système.
+
+\subsection{Monitoring des tâches}
+
+Pour chaque tâche qui s'exécute, une mesure du temps d'une exécution est faite à l'aide de \verb|std::chrono::steady_clock::now()|. Deux variables (atomiques) sauvegarde la valeur de la dernière exécution et le pire cas. Dans le cas de notre système, nous n'avons pas d'horloge permettant une granularité plus grande qu'une milliseconde.
+
+\subsection{Logging}
+
+Une fois que nous avons implanté le code pour avoir l'information dans des variables, il faut penser à un moyen de la communiquer. Il a donc fallu implémenter une nouvelle fonction (avec le code de \textit{monitoring} associé) pour lire l'ensemble des variable et les pousser vers les nouvelles sorties. Nous avons décider d'exécuter la tâche toutes les 100 millisecondes afin de ne pas surcharger le système. Cette fonction est appelée par la tâche de \textit{monitoring} déjà existante qui auparavant ne poussait les donnée que vers la console une fois toute les secondes.
+
+\subsection{Sortie en fichier csv}
+
+La sortie qui permet de faire une analyse compréhensive du système est un simple fichier csv qui est sauvegardé en mémoire non-volatile au fur et à mesure que la simulation avance (de sorte qu'un \textit{crash} peut être investigué en s'aidant du fichier). Le format csv étant supporté par pratiquement tous les outils d'analyse et de base de données, il est facile de s'en servir pour obtenir des statisques sur un grand nombre d'exécutions, de réaliser des analyses et des graphiques en Python, en R, en MATLAB ou tout simplement dans Microsoft Excel ou LibreOffice Calc.
+
+\subsection{GUI}
+
+\#TODO
+
+\begin{figure}
+  \includegraphics[width=\linewidth]{placeholder.png}
+  \caption{Le gui en action}
+  \label{fig:GUI}
+\end{figure}
 
 \section{Résultats}
 
