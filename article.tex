@@ -68,11 +68,8 @@
 
 \author{Daniel~Lussier-Lévesque et Ian~Gagnon}
 
-% make the title area
 \maketitle
 
-% As a general rule, do not put math, special symbols or citations
-% in the abstract or keywords.
 \begin{abstract}
 L'implémentation d'un système de contrôle de drone fermier a été réalisé progressivement tout au long de la session en commençant par un module TrueTime avec un système continu déjà implémenté en Simulink. Par la suite, l'implémentation a continué sur une machine virtuelle QNX roulant sous VMware, avec certaines fonctions déjà fournies. Ce rapport se concentre sur ce qui a été fait sur cette base de code pour améliorer les aspects les plus importants. La première étape a été d'implémenter un système de log qui nous permettent de voir comment se comporte l'ordonnancement des tâches et la performance du système. Par la suite, malgré le manque de droits d'accès qui nous permettraient de comprendre l'ensemble des problèmes de performances, nous avons toutefois été capable de les mesurer et de les documenter. Un système graphique vivant en dehors de la machine virtuelle nous permettant de valider le comportement du système a aussi été implémenté.
 \end{abstract}
@@ -99,17 +96,15 @@ La machine virtuelle roule sous QNX 7.0 sous VMware Workstation avec un hôte Wi
 
 Le système décrit plus haut a plusieurs lacunes importantes. Nous allons ici nous focaliser sur les trois principales faiblesses qui nous ont empêcher de réaliser correctement plusieurs améliorations auxquels nous avions pensés. Il va s'en dire que nous avons penser plus important de régler ces lacunes au meilleur de nos capacités en priorité.
 
-\subsection{Peu de visibilité sur l'état du système}
+\subsection{Peu de visibilité sur l'état du système et sur la qualité de l'ordonnancement}
 
 Le principal problème est qu'avec le système de base, nous ne savons pas si le système est \emph{correct}, c'est à dire que le système effectue les actions que l'ont s'attend à ce qu'il fasse. Les messages de logs qui sont envoyés sont répétitifs et il est facile de manquer un comportement anormal dans les 1800 messages que comportent une séquence d'exécution. De plus, il est impossible de savoir ce qui se passe à l'intérieur de cette période d'une seconde. une période plus courte n'est toutefois pas envisageable: il serait impossible d'analyser l'entièreté du message en temps réel et donc encore plus facile de manquer une information inattendue. Il n'est pas non plus envisageable d'analyser les données à la fin de la simulation: la console de debug ne peut contenir qu'un nombre limité de messages.
 
-En conséquence, il n'est pas possible de qualifier le système d'aucune manière: un problème de comportement du système demanderait une correction importante au code qui invaliderait l'ensemble des mesures effectués. Comme une séance de simulation dure 20 minutes, il serait difficile d'arriver à un ensemble de résultat suffisant dans un temps raisonnables si nos mesures devaient être invalidés. Sans mesures fiables, il est impossible de déterminer si une tentative d'amélioration du système améliore réellement le système. Pour cette raison, cette lacune est considérée comme la plus importante du système implémenté.
-
-\subsection{Aucune visibilité sur la qualité de l'ordonnancement}
+En conséquence, il n'est pas possible de qualifier le système d'aucune manière: un problème de comportement du système demanderait une correction importante au code qui invaliderait l'ensemble des mesures effectués. Comme une séance de simulation dure 20 minutes, il serait difficile d'arriver à un ensemble de résultat suffisant dans un temps raisonnables si nos mesures devaient être invalidés. Sans mesures fiables, il est impossible de déterminer si une tentative d'amélioration du système améliore réellement le système.
 
 En assumant que le comportement du système est correct, nous ne pouvons toujours pas penser à améliorer les performances du système ou rajouter de nouvelles fonctions utiles parce que nous n'avons aucune métrique de performance de disponible. Nous ne savons pas si les tâches manquent leur échéance de manière régulière et arrivent tout juste à rester fonctionnels, ou au contraire si il y a largement de ressources disponibles pour de nouvelles tâches.
 
-Dans le cas où le comportement du système n'est pas celui attendu, les métriques de qualité d'exécution nous sont aussi utile pour comprendre les problèmes. Si une tâche est en famine parce que les tâches plus prioritaires prennent toutes les ressources, ce sera facilement visible et évitera une longue séance de debug en aveugle. Nous considérons cette lacune comme fondamentale et bloquante pour des améliorations à d'autres aspect du système.
+Dans le cas où le comportement du système n'est pas celui attendu, les métriques de qualité d'exécution nous sont aussi utile pour comprendre les problèmes. Si une tâche est en famine parce que les tâches plus prioritaires prennent toutes les ressources, ce sera facilement visible et évitera une longue séance de debug en aveugle.
 
 \subsection{Pics de latence}
 
@@ -119,7 +114,9 @@ En plus d'affecter les performances du systèmes et de le rendre moins fiable, u
 
 Les pics des latences durent plusieurs millisecondes. Plusieurs tentatives de contourner le problème ont été essayé: réduire le nombre de cœurs du système de contrôle, augmenter le nombre de cœurs du système et déplacer la machine virtuelle du disque réseau au disque dur local. Déplacer la machine virtuelle à permis de réduire significativement la durée de ces pics, mais aucune des ces tentatives n'a permis de ramener les variations de latences à des temps raisonnables.
 
-\section{Améliorations apportées}\label{ameliorations}
+\section{Améliorations apportées}
+\label{ameliorations}
+
 \begin{figure}
 	\centering
 	\captionsetup{justification=centering}
@@ -128,12 +125,11 @@ Les pics des latences durent plusieurs millisecondes. Plusieurs tentatives de co
 	\label{taskDiagram}
 \end{figure}
 
-Des lacunes présentées à la section précédente, les deux premières concernant la visibilité du système ont été identifiées comme prioritaires. 
-Pour y remédier, des améliorations sont proposées et illustrées à la Figure \ref{taskDiagram}. Un \textit{monitoring} des tâches récolte d'abord les métriques d'exécution pour chaque tâche, un module de \textit{logging} sert ensuite à regrouper les informations pour finalement les enregistrer en format csv. En supplément, un \textit{Graphical User Interface} (GUI) permet de suivre le déroulement de la simulation.
+Pour remédier aux lacunes présentées à la section précédente, des améliorations sont proposées et illustrées à la Figure \ref{taskDiagram}. Un \textit{monitoring} des tâches récolte d'abord les métriques d'exécution pour chaque tâche, un module de \textit{logging} sert ensuite à regrouper les informations pour finalement les enregistrer en format csv. En supplément, un \textit{Graphical User Interface} (GUI) permet de suivre le déroulement de la simulation.
 
 \subsection{Monitoring des tâches}
 
-Pour chaque tâche qui s'exécute, le temps d'exécution est calculé en faisant la différence entre les temps initial et final obtenus par la fonction \verb|std::chrono::steady_clock::now()| et stockés dans des variables atomiques. Ainsi, la durée de la dernière exécution (\textit{last runtime}), le pire cas (WCET pour \textit{Worst-Case Execution Time}) et les échéances manquées (\textit{missed deadlines}) sont comptabilisés. Notons, que l'horloge du système, avec sa granularité d'une milliseconde, limite la précision des données.
+Pour chaque tâche qui s'exécute, le temps d'exécution est calculé en faisant la différence entre les temps initial et final obtenus par la fonction \verb|std::chrono::steady_clock::now()| et stockés dans des variables atomiques. Ainsi, la durée de la dernière exécution (\textit{last runtime}), le pire cas (WCET pour \textit{Worst-Case Execution Time}) et les échéances manquées (\textit{missed deadlines}) sont comptabilisés. L'horloge du système, avec sa granularité d'une milliseconde, limite la précision des données.
 
 \subsection{Logging}
 
@@ -141,7 +137,7 @@ Une fois que nous avons implanté le code pour avoir l'information dans des vari
 
 \subsection{Sortie en fichier csv}
 
-La sortie qui permet de faire une analyse compréhensive du système est un simple fichier csv qui est sauvegardé en mémoire non-volatile au fur et à mesure que la simulation avance. Le format csv étant supporté par pratiquement tous les outils d'analyse et de base de données, il est donc facile de s'en servir pour obtenir des statistiques sur un grand nombre d'exécutions pour ensuite les formater adéquatement en tableaux, en graphiques ou en générant un rapport (e.g. en JSON). En effet, que ce soit à l'aide de scripts (avec Python, R ou MATLAB) ou manuellement (avec Microsoft Excel ou LibreOffice Calc), l'analyse sera infiniment plus poussée que celle obtenue avec la sortie en console. De plus, cette approche permet d'étudier en détails les circonstances d'un \textit{crash}.
+La sortie qui permet de faire une analyse compréhensive du système est un simple fichier csv qui est sauvegardé en mémoire non-volatile au fur et à mesure que la simulation avance. Le format csv étant supporté par pratiquement tous les outils d'analyse et de base de données, il est donc facile de s'en servir pour obtenir des statistiques sur un grand nombre d'exécutions pour ensuite les formater adéquatement en tableaux, en graphiques ou en générant un rapport. En effet, que ce soit à l'aide de langages de scripts (Python, R ou MATLAB) ou à l'aide d'un tableur (Microsoft Excel ou LibreOffice Calc), l'analyse sera infiniment plus poussée que celle obtenue avec la sortie en console.
  
 \subsection{GUI}
 Un GUI a été implémenté en Python afin de suivre l'avancement de la simulation. Comme il s'agit d'une preuve de concept et que le focus de ce projet est l'implémentation sous QNX, l'interface graphique est limitée à un strict minimum (voir section~\nameref{resultats}). L'accent est plutôt mis sur le transfert de données. À cet égard, l'hypothèse (très réaliste) que le drone transmet ces images à la base via une connexion réseau est émise et cette connexion est exploitée pour établir la communication avec le GUI en utilisant un \textit{socket} internet avec le protocole TCP/IP. Comme il n'y a pas de \textit{End Of Transmission} (EOT) sur un \textit{socket}, une convention doit être choisie afin d'assurer un bon transfert de données: message d'une longueur fixe, message délimité (i.e. avec caractères spéciaux de début et fin) ou  message avec une entête indiquant sa longueur. Ici, pour garder le tout le plus simple possible, la longueur des paquets est fixée et des caractères de remplissage (i.e. des espaces) sont ajoutés à la fin des trames de données pour ajuster la taille des paquets. De plus, un délai sur la connexion, une gestion de déconnexion ainsi qu'un avertissement de fin de simulation sont ajoutés pour prévenir les erreurs et éviter les \textit{deadlocks}.
@@ -159,9 +155,7 @@ Avant d'analyser le système en détails à l'aide du fichier csv fournit par no
 	\label{fig:farmMap}
 \end{figure}
 
-L'analyse du système est réalisée en deux parties. D'une part, le comportement du système est examiné pour valider que celui-ci fait bien ce qu'il doit faire et ce sans écart de conduite (i.e. comportement anormal). Pour illustrer la conformité de notre système en simulation, nous avons décidé de tracer les courbes des variables d'état (vitesses, orientation, batterie, mémoire, etc). De cette manière, nous pouvons aisément comparer nos résultats avec les courbes analogues obtenues de la simulation sous TrueTime, notre \textit{golden model} dans ce projet. Les résultats concordent dans l'ensemble, sauf quelques écarts attribuables aux différences entre les systèmes continus (e.g. le temps de recharge). Un exemple est donné à la Figure \ref{fig:comparaisonVh} où les vitesses horizontales pour les deux simulations sont comparées. On remarque que l'allure des courbes est bel et bien similaire. Une vue agrandie de la courbe de QNX permet d'apprécier les détails du pas de temps...
-
-\#TODO DIRE CE QUE L'ON VOIT SUR LE ZOOM
+L'analyse du système est réalisée en deux parties. D'une part, le comportement du système est examiné pour valider que celui-ci fait bien ce qu'il doit faire et ce sans écart de conduite (i.e. comportement anormal). Pour illustrer la conformité de notre système en simulation, nous avons décidé de tracer les courbes des variables d'état (vitesses, orientation, batterie, mémoire, etc). De cette manière, nous pouvons aisément comparer nos résultats avec les courbes obtenues de la simulation sous TrueTime générées à une étape précédente de ce projet. Les résultats concordent dans l'ensemble, sauf quelques écarts attribuables aux différences entre les systèmes continus (e.g. le temps de recharge). Un exemple est donné à la Figure \ref{fig:comparaisonVh} où les vitesses horizontales pour les deux simulations sont comparées. On remarque que l'allure des courbes est bel et bien similaire. Une vue agrandie de la courbe de QNX permet d'apprécier les détails du pas de temps rapproché qui permet de qualifier les régimes transitoires, dans ce cas, comment un changement d'orientation et de consigne de vitesse affecte la vitesse horizontale réelle, ce qui était impossible avec les données sorties sur la console.
 
 \begin{figure}
 	\centering
@@ -172,14 +166,12 @@ L'analyse du système est réalisée en deux parties. D'une part, le comportemen
 	\label{fig:comparaisonVh}
 \end{figure}
 
-D'autre part, la qualité de l'ordonnancement est étudiée à l'aide du \textit{Worst-Case Execution Time} (WCET), une métrique populaire dans l'étude des systèmes temps réel. Pour ce faire, trois tâches périodiques (orientation, vitesse et batterie) sont analysées graphiquement à deux reprises. Les résultats sont présentés à la Figure \ref{fig:perfoTrois}. On constate que les pires temps d'exécution varient entre les tâches, au cours de la simulation et entre les essais. La variation entre les tâches est justifiable puisque différentes tâches prennent différents temps pour s'exécuter. La variation qui survient durant la simulation est explicable par le fait qu'une tâche puisse être préemptée par d'autres tâches plus prioritaires, rallongeant ainsi son exécution en fonction de la coordination des tâches au fil de la simulation. Cependant, sachant qu'il s'agit de la même simulation qui est roulée plusieurs fois sur la même machine dans les mêmes conditions, les performances d'ordonnancement ne devraient pas variées avec les essais. En d'autres termes, les résultats devraient rester constants entre deux simulations. Pour corroborer ce résultat intriguant, nous avons refait trois essais avec la tâche qui semblait la moins stable en terme de WCET, soit l'orientation. Le résultat (Figure \ref{fig:perfoOrientation}) confirme nos craintes: il survient des pics de latence non-déterministes dont l'origine est inconnue. Des analyses plus approfondies, qu'il nous est impossible d'effectuer à distance, seraient nécessaires pour en déterminer la cause.
-
-\#TODO ÉMETTRE UNE PHYPOTHÈSE POUR L'EXPLIQUER...?? Ou pas... comme on en parle dans nos améliorations futures. 
+D'autre part, la qualité de l'ordonnancement est étudiée à l'aide du \textit{Worst-Case Execution Time} (WCET), une métrique populaire dans l'étude des systèmes temps réel. Pour ce faire, trois tâches périodiques (orientation, vitesse et batterie) sont analysées graphiquement à deux reprises. Les résultats sont présentés à la Figure \ref{fig:perfoTrois}. On constate que les pires temps d'exécution varient entre les tâches, au cours de la simulation et entre les essais. La variation entre les tâches est justifiable puisque différentes tâches prennent différents temps pour s'exécuter. La variation qui survient durant la simulation est explicable par le fait qu'une tâche puisse être préemptée par d'autres tâches plus prioritaires, rallongeant ainsi son exécution en fonction de la coordination des tâches au fil de la simulation. Cependant, sachant qu'il s'agit de la même simulation qui est roulée plusieurs fois sur la même machine dans les mêmes conditions, les performances d'ordonnancement ne devraient pas variées avec les essais. En d'autres termes, les résultats devraient rester constants entre deux simulations. Pour corroborer ce résultat intriguant, nous avons refait trois essais avec la tâche qui semblait la moins stable en terme de WCET, soit l'orientation. Le résultat (Figure \ref{fig:perfoOrientation}) confirme nos craintes: il survient des pics de latence non-déterministes dont l'origine est inconnue. Des analyses plus approfondies seraient nécessaires pour en déterminer la cause. Nous pensons qu'il s'agit d'un accès disque bloquant (l'ordre de grandeur serait le bon) soit du côté du système hôte (MS Windows) ou de la machine virtuelle (QNX), mais sans droit d'utilisateurs élevés il ne nous est pas possible de faire les tests qui pourraient le confirmer.
 
 \begin{figure}
 	\centering
 	\captionsetup{justification=centering}
-	\includegraphics[width=\linewidth]{csv_try_1_2.png}
+	\includegraphics[width=220pt]{csv_try_1_2.png}
 	\caption{WCET pour trois tâches avec deux essais}
 	\label{fig:perfoTrois}
 \end{figure}
@@ -187,18 +179,17 @@ D'autre part, la qualité de l'ordonnancement est étudiée à l'aide du \textit
 \begin{figure}
 	\centering
 	\captionsetup{justification=centering}
-	\includegraphics[width=\linewidth]{orientation_cont.png}
+	\includegraphics[width=200pt]{orientation_cont.png}
 	\caption{WCET pour l'orientation avec trois essais}
 	\label{fig:perfoOrientation}
 \end{figure}
 
-
-
 \subsection{Description du GUI}
+
 \begin{figure}
 	\centering
 	\captionsetup{justification=centering}
-	\includegraphics[width=\linewidth]{GUI_image.png}
+	\includegraphics[width=200pt]{GUI_image.png}
 	\caption{GUI durant la simulation}
 	\label{fig:GUI}
 \end{figure}
@@ -206,14 +197,14 @@ D'autre part, la qualité de l'ordonnancement est étudiée à l'aide du \textit
 Dans la communication TCP/IP, le serveur roule sur QNX et le client sur le GUI. Après avoir ouvert le GUI, il faut donc d'abord lancer la simulation QNX (qui va partir le serveur) et ensuite appuyer sur le bouton "Connect drone" pour établir la connexion. Le GUI, présenté à la Figure \ref{fig:GUI}, affiche les paramètres de base de la simulation, soit: la mémoire, le niveau de batterie, la position du drone (x, y) et son altitude (z). De plus, une vidéo montrant le GUI en fonction (i.e. la simulation en accélérée) est disponible: \href{https://drive.google.com/file/d/1W9yt0Z4YxCwr0TjXkgv12WVO9TSmWGtv/view?usp=sharing}{{\color{blue}INF6600-GUI-DEMO}}\cite{ref:video}.
 
 \section{Conclusion}
-Dans cet article, nous avons décrit les améliorations apportées à l'implémentation d'un système de contrôle de drone fermier. L'analyse du système de base a soulevé des lacunes importantes en ce qui concerne les visibilités de l'état du système et de la qualité de l'ordonnancement. En effet, ce manque d'informations rend l'analyse du système et de ses performances laborieuse pour ne pas dire impossible. 
+Dans cet article, nous avons décrit les améliorations apportées à l'implémentation d'un système de contrôle de drone fermier. L'analyse du système de base a soulevé des lacunes importantes en ce qui concerne les visibilités de l'état du système et de la qualité de l'ordonnancement. En effet, ce manque d'informations rend l'analyse du système et de ses performances difficile ou impossible. 
 
 Afin de pallier à ce manque de données, nous avons dans un premier temps implémenté un \textit{monitoring} des tâches avec un module de \textit{logging} permettant de recueillir de précieuses informations et de les enregistrer pour les analyser ultérieurement. Cela nous a permis d'étudier le système et de réaliser que des pics de latence imprévisibles affectait le système.
 L'ensemble du code du système de contrôle et les résultats de simulations sont disponibles sur un dépôt GitHub\cite{ref:code}.
 
 Dans un second temps, nous avons ajouté un GUI communiquant avec le drone via une connexion réseau utilisant les protocoles TCP/IP. Ce dernier affiche l'état du système durant la simulation et aide l'utilisateur à repérer un comportement inattendu du drone. Dans l'optique d'un déploiement réel du système sur une ferme, cette interface graphique roulant au niveau de la base d'opérations s'avérerait utile puisqu'elle permettrait au fermier du suivre le drone lors de sa mission et de réagir en cas de problèmes.
 
-Il y a plusieurs directions pour les travaux futurs. Premièrement, nous n'avons pas été en mesure de comprendre la source ou d'éliminer les pics de latences. Il serait intéressant d'étudier le système avec la machine virtuelle roulant uniquement sur un disque dur virtuel en mémoire pour voir si la source se trouve au niveau des accès disques. La meilleure option serait de rouler le système sur du matériel dédié.
+Les travaux futurs s'attarderont premièrement à comprendre la source et éliminer les pics de latences. Il serait intéressant d'étudier le système avec la machine virtuelle roulant uniquement sur un disque dur virtuel en mémoire pour voir si la source se trouve au niveau des accès disques. La meilleure option serait de rouler le système sur du matériel dédié.
 
 Deuxièmement, la sécurité du système pourrait être rehaussée par l'utilisation de partitions. En isolant les processus de cette manière, on éviterait que la défaillance d'une tâche fasse planter tout le système. Par exemple, une erreur du système de communication n'aurait aucun impact sur le système de navigation, ce qui n'est pas une certitude présentement.
 
@@ -233,14 +224,6 @@ https://github.com/IanGagnon7/INF6600.
 
 
 \end{thebibliography}
-
-
-
-
-% Can be used to pull up biographies so that the bottom of the last one
-% is flush with the other column.
-%\enlargethispage{-5in}
-
 
 
 % that's all folks
