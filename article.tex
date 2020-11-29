@@ -178,6 +178,7 @@ Dans la communication TCP/IP, le serveur roule sur QNX et le client sur le GUI. 
 Dans cet article, nous avons décrit les améliorations apportées à l'implémentation d'un système de contrôle de drone fermier. L'analyse du système de base a soulevé des lacunes importantes en ce qui concerne les visibilités de l'état du système et de la qualité de l'ordonnancement. En effet, ce manque d'informations rend l'analyse du système et de ses performances laborieuse pour ne pas dire impossible. 
 
 Afin de pallier à ce manque de données, nous avons dans un premier temps implémenté un \textit{monitoring} des tâches avec un module de \textit{logging} permettant de recueillir de précieuses informations et de les enregistrer pour les analyser ultérieurement. Cela nous a permis d'étudier le système et de réaliser que des pics de latence imprévisibles affectait le système.
+L'ensemble du code du système de contrôle et les résultats de simulations sont disponibles sur un dépôt GitHub\cite{ref:code}.
 
 Dans un second temps, nous avons ajouté un GUI communiquant avec le drone via une connexion réseau utilisant les protocoles TCP/IP. Ce dernier affiche l'état du système durant la simulation et aide l'utilisateur à repérer un comportement inattendu du drone. Dans l'optique d'un déploiement réel du système sur une ferme, cette interface graphique roulant au niveau de la base d'opérations s'avérerait utile puisqu'elle permettrait au fermier du suivre le drone lors de sa mission et de réagir en cas de problèmes.
 
