@@ -94,53 +94,6 @@ La politique d'ordonnancement utilisée est un systèmes de priorités fixes et 
 La machine virtuelle roule sous QNX 7.0 sous VMware Workstation avec un hôte Windows 10. La machine hôte à un processeur d'Intel à quatre coeurs, le i7 3770, avec 16 GB de mémoire DDR3 et utilise un Seagate ST1000DM003 comme disque dur. 
 
 
-% An example of a floating figure using the graphicx package.
-% Note that \label must occur AFTER (or within) \caption.
-% For figures, \caption should occur after the \includegraphics.
-% Note that IEEEtran v1.7 and later has special internal code that
-% is designed to preserve the operation of \label within \caption
-% even when the captionsoff option is in effect. However, because
-% of issues like this, it may be the safest practice to put all your
-% \label just after \caption rather than within \caption{}.
-%
-% Reminder: the "draftcls" or "draftclsnofoot", not "draft", class
-% option should be used if it is desired that the figures are to be
-% displayed while in draft mode.
-%
-%\begin{figure}[!t]
-%\centering
-%\includegraphics[width=2.5in]{myfigure}
-% where an .eps filename suffix will be assumed under latex, 
-% and a .pdf suffix will be assumed for pdflatex; or what has been declared
-% via \DeclareGraphicsExtensions.
-%\caption{Simulation results for the network.}
-%\label{fig_sim}
-%\end{figure}
-
-% Note that the IEEE typically puts floats only at the top, even when this
-% results in a large percentage of a column being occupied by floats.
-
-
-% An example of a double column floating figure using two subfigures.
-% (The subfig.sty package must be loaded for this to work.)
-% The subfigure \label commands are set within each subfloat command,
-% and the \label for the overall figure must come after \caption.
-% \hfil is used as a separator to get equal spacing.
-% Watch out that the combined width of all the subfigures on a 
-% line do not exceed the text width or a line break will occur.
-%
-%\begin{figure*}[!t]
-%\centering
-%\subfloat[Case I]{\includegraphics[width=2.5in]{box}%
-%\label{fig_first_case}}
-%\hfil
-%\subfloat[Case II]{\includegraphics[width=2.5in]{box}%
-%\label{fig_second_case}}
-%\caption{Simulation results for the network.}
-%\label{fig_sim}
-%\end{figure*}
-
-
 \section{Lacunes du système de base}
 \label{lacunes}
 
@@ -224,64 +177,28 @@ Dans la communication TCP/IP, le serveur roule sur QNX et le client sur le GUI. 
 \section{Conclusion}
 Dans cet article, nous avons décrit les améliorations apportées à l'implémentation d'un système de contrôle de drone fermier. L'analyse du système de base a soulevé des lacunes importantes en ce qui concerne les visibilités de l'état du système et de la qualité de l'ordonnancement. En effet, ce manque d'informations rend l'analyse du système et de ses performances laborieuse pour ne pas dire impossible. 
 
-Afin de pallier à ce manque de données, nous avons dans un premier temps implémenté un \textit{monitoring} des tâches avec un module de \textit{logging} permettant de recueillir de précieuses informations et de les enregistrer pour les analyser ultérieurement. Cela nous a permis d'étudier le système et de réaliser que...
+Afin de pallier à ce manque de données, nous avons dans un premier temps implémenté un \textit{monitoring} des tâches avec un module de \textit{logging} permettant de recueillir de précieuses informations et de les enregistrer pour les analyser ultérieurement. Cela nous a permis d'étudier le système et de réaliser que des pics de latence imprévisibles affectait le système.
 
-\#TODO Parler brièvement des conclusions de l'analyse
+Dans un second temps, nous avons ajouté un GUI communiquant avec le drone via une connexion réseau utilisant les protocoles TCP/IP. Ce dernier affiche l'état du système durant la simulation et aide l'utilisateur à repérer un comportement inattendu du drone. Dans l'optique d'un déploiement réel du système sur une ferme, cette interface graphique roulant au niveau de la base d'opérations s'avérerait utile puisqu'elle permettrait au fermier du suivre le drone lors de sa mission et de réagir en cas de problèmes.
 
-Dans un second temps, nous avons ajouté un GUI communiquant avec le drone via une connexion réseau utilisant le protocole TCP/IP. Ce dernier affiche l'état du système durant la simulation et aide l'utilisateur à repérer un comportement inattendu du drone. Dans l'optique d'un déploiement réel du système sur une ferme, cette interface graphique roulant au niveau de la base (vraisemblablement la maison du fermier) s'avérerait utile puisqu'elle permettrait au fermier du suivre le drone lors de sa mission et de réagir en cas de problèmes.
-
-\vspace{2mm}
-
-Cependant, les améliorations apportées ont des limites...
-
-
-\vspace{2mm}
-Il y a plusieurs directions pour les travaux futurs. Premièrement, il serait intéressant d'analyser les performances du système en utilisant plus de \textit{cores} (8 par exemple). Une telle parallélisation des tâches, si bien réalisée, pourrait considérablement augmenter la rapidité du système.
+Nous n'avons pas été en mesure de comprendre la source ou d'éliminer les pics de latences. Il serait possible dans des travaux possibles d'étudier le système avec la machine virtuelle roulant uniquement sur un disque dur virtuel en mémoire pour voir si la source se trouve au niveau des accès disques. La meilleure option serait de rouler le système sur du matériel dédié.
 
 Deuxièmement, la sécurité du système pourrait être rehaussée par l'utilisation de partitions. En isolant les processus de cette manière, on éviterait que la défaillance d'une tâche fasse planter tout le système. Par exemple, une erreur du système de communication n'aurait aucun impact sur le système de navigation, ce qui n'est pas une certitude présentement.
 
 Dernièrement, d'un point de vue sécurité pour une utilisation réelle du système, il serait pertinent d'ajouter un bouton d'urgence à l'interface graphique pour arrêter le drone de force ou le ramener immédiatement à la base dans le cas où l'algorithme de contrôle aurait un raté (e.g. un mauvais calcul qui enverrait le drone à 1000 m d'altitude). 
 
 
-
-
-
-
-
-% if have a single appendix:
-%\appendix[Proof of the Zonklar Equations]
-% or
-%\appendix  % for no appendix heading
-% do not use \section anymore after \appendix, only \section*
-% is possibly needed
-
-% use appendices with more than one appendix
-% then use \section to start each appendix
-% you must declare a \section before using any
-% \subsection or using \label (\appendices by itself
-% starts a section numbered zero.)
-%
-
-% references section
-
-% can use a bibliography generated by BibTeX as a .bbl file
-% BibTeX documentation can be easily obtained at:
-% http://mirror.ctan.org/biblio/bibtex/contrib/doc/
-% The IEEEtran BibTeX style support page is at:
-% http://www.michaelshell.org/tex/ieeetran/bibtex/
-%\bibliographystyle{IEEEtran}
-% argument is your BibTeX string definitions and bibliography database(s)
-%\bibliography{IEEEabrv,../bib/paper}
-%
-% <OR> manually copy in the resultant .bbl file
-% set second argument of \begin to the number of references
-% (used to reserve space for the reference number labels box)
 \begin{thebibliography}{1}
 
 \bibitem{ref:video}
-Ian Gagnon, Daniel Lussier-Lévesque, \emph{Demonstration du GUI pour drône},\newline
+Ian Gagnon, Daniel Lussier-Lévesque, \emph{Demonstration du GUI pour drone},\newline
 https://drive.google.com/file/d/\newline
 1W9yt0Z4YxCwr0TjXkgv12WVO9TSmWGtv/view?usp=sharing.
+
+\bibitem{ref:code}
+Ian Gagnon, Daniel Lussier-Lévesque, \emph{INF6600},\newline
+https://github.com/IanGagnon7/INF6600.
+
 
 \end{thebibliography}
 
