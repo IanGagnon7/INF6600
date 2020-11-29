@@ -154,13 +154,44 @@ Avant d'analyser le système en détails à l'aide du fichier csv fournit par no
 \begin{figure}
 	\centering
 	\captionsetup{justification=centering}
-	\includegraphics[width=1.8in]{farmMap.png}
+	\includegraphics[width=0.7in]{farmMap.png}
 	\caption{Image agrandie de la zone couverte par le drone}
 	\label{fig:farmMap}
 \end{figure}
 
+L'analyse du système est réalisée en deux parties. D'une part, le comportement du système est examiné pour valider que celui-ci fait bien ce qu'il doit faire et ce sans écart de conduite (i.e. comportement anormal). Pour illustrer la conformité de notre système en simulation, nous avons décidé de tracer les courbes des variables d'état (vitesses, orientation, batterie, mémoire, etc). De cette manière, nous pouvons aisément comparer nos résultats avec les courbes analogues obtenues de la simulation sous TrueTime, notre \textit{golden model} dans ce projet. Les résultats concordent dans l'ensemble, sauf quelques écarts attribuables aux différences entre les systèmes continus (e.g. le temps de recharge). Un exemple est donné à la Figure \ref{fig:comparaisonVh} où les vitesses horizontales pour les deux simulations sont comparées. On remarque que l'allure des courbes est bel et bien similaire. Une vue agrandie de la courbe de QNX permet d'apprécier les détails du pas de temps...
 
-\#TODO Parler des vrais résultats et mettre les graphiques
+\#TODO DIRE CE QUE L'ON VOIT SUR LE ZOOM
+
+\begin{figure}
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=2.8in]{TrueTimeVh.png}
+	\includegraphics[width=\linewidth]{csv_variable_etat.png}
+	\caption{Comparaison de la vitesse horizontale obtenue sous TrueTime (noir) et QNX (blanc)}
+	\label{fig:comparaisonVh}
+\end{figure}
+
+D'autre part, la qualité de l'ordonnancement est étudiée à l'aide du \textit{Worst-Case Execution Time} (WCET), une métrique populaire dans l'étude des systèmes temps réel. Pour ce faire, trois tâches périodiques (orientation, vitesse et batterie) sont analysées graphiquement à deux reprises. Les résultats sont présentés à la Figure \ref{fig:perfoTrois}. On constate que les pires temps d'exécution varient entre les tâches, au cours de la simulation et entre les essais. La variation entre les tâches est justifiable puisque différentes tâches prennent différents temps pour s'exécuter. La variation qui survient durant la simulation est explicable par le fait qu'une tâche puisse être préemptée par d'autres tâches plus prioritaires, rallongeant ainsi son exécution en fonction de la coordination des tâches au fil de la simulation. Cependant, sachant qu'il s'agit de la même simulation qui est roulée plusieurs fois sur la même machine dans les mêmes conditions, les performances d'ordonnancement ne devraient pas variées avec les essais. En d'autres termes, les résultats devraient rester constants entre deux simulations. Pour corroborer ce résultat intriguant, nous avons refait trois essais avec la tâche qui semblait la moins stable en terme de WCET, soit l'orientation. Le résultat (Figure \ref{fig:perfoOrientation}) confirme nos craintes: il survient des pics de latence non-déterministes dont l'origine est inconnue. Des analyses plus approfondies, qu'il nous est impossible d'effectuer à distance, seraient nécessaires pour en déterminer la cause.
+
+\#TODO ÉMETTRE UNE PHYPOTHÈSE POUR L'EXPLIQUER...?? Ou pas... comme on en parle dans nos améliorations futures. 
+
+\begin{figure}
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=\linewidth]{csv_try_1_2.png}
+	\caption{WCET pour trois tâches avec deux essais}
+	\label{fig:perfoTrois}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=\linewidth]{orientation_cont.png}
+	\caption{WCET pour l'orientation avec trois essais}
+	\label{fig:perfoOrientation}
+\end{figure}
+
 
 
 \subsection{Description du GUI}
@@ -182,7 +213,7 @@ L'ensemble du code du système de contrôle et les résultats de simulations son
 
 Dans un second temps, nous avons ajouté un GUI communiquant avec le drone via une connexion réseau utilisant les protocoles TCP/IP. Ce dernier affiche l'état du système durant la simulation et aide l'utilisateur à repérer un comportement inattendu du drone. Dans l'optique d'un déploiement réel du système sur une ferme, cette interface graphique roulant au niveau de la base d'opérations s'avérerait utile puisqu'elle permettrait au fermier du suivre le drone lors de sa mission et de réagir en cas de problèmes.
 
-Nous n'avons pas été en mesure de comprendre la source ou d'éliminer les pics de latences. Il serait possible dans des travaux possibles d'étudier le système avec la machine virtuelle roulant uniquement sur un disque dur virtuel en mémoire pour voir si la source se trouve au niveau des accès disques. La meilleure option serait de rouler le système sur du matériel dédié.
+Il y a plusieurs directions pour les travaux futurs. Premièrement, nous n'avons pas été en mesure de comprendre la source ou d'éliminer les pics de latences. Il serait intéressant d'étudier le système avec la machine virtuelle roulant uniquement sur un disque dur virtuel en mémoire pour voir si la source se trouve au niveau des accès disques. La meilleure option serait de rouler le système sur du matériel dédié.
 
 Deuxièmement, la sécurité du système pourrait être rehaussée par l'utilisation de partitions. En isolant les processus de cette manière, on éviterait que la défaillance d'une tâche fasse planter tout le système. Par exemple, une erreur du système de communication n'aurait aucun impact sur le système de navigation, ce qui n'est pas une certitude présentement.
 
