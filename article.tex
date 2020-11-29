@@ -59,6 +59,7 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{hyperref} 
+\usepackage{xcolor}
 
 \begin{document}
 
@@ -149,7 +150,7 @@ Le système décrit plus haut a plusieurs lacunes importantes. Nous allons ici n
 
 Le principal problème est qu'avec le système de base, nous ne savons pas si le système est \emph{correct}, c'est à dire que le système effectue les actions que l'ont s'attend à ce qu'il fasse. Les messages de logs qui sont envoyés sont répétitifs et il est facile de manquer un comportement anormal dans les 1800 messages que comportent une séquence d'exécution. De plus, il est impossible de savoir ce qui se passe à l'intérieur de cette période d'une seconde. une période plus courte n'est toutefois pas envisageable: il serait impossible d'analyser l'entièreté du message en temps réel et donc encore plus facile de manquer une information inattendue. Il n'est pas non plus envisageable d'analyser les données à la fin de la simulation: la console de debug ne peut contenir qu'un nombre limité de messages.
 
-En conséquence, il n'est pas possible de qualifier le système d'aucune manière: un problème de comportement du système demanderait une correction importante au code qui invaliderait l'ensemble des mesures effectués. Comme une séance de simulation dure 30 minutes, il serait difficile d'arriver à un ensemble de résultat suffisant dans un temps raisonnables si nos mesures devaient être invalidés. Sans mesures fiables, il est impossible de déterminer si une tentative d'amélioration du système améliore réellement le système. Pour cette raison, cette lacune est considérée comme la plus importante du système implémenté.
+En conséquence, il n'est pas possible de qualifier le système d'aucune manière: un problème de comportement du système demanderait une correction importante au code qui invaliderait l'ensemble des mesures effectués. Comme une séance de simulation dure 20 minutes, il serait difficile d'arriver à un ensemble de résultat suffisant dans un temps raisonnables si nos mesures devaient être invalidés. Sans mesures fiables, il est impossible de déterminer si une tentative d'amélioration du système améliore réellement le système. Pour cette raison, cette lacune est considérée comme la plus importante du système implémenté.
 
 \subsection{Aucune visibilité sur la qualité de l'ordonnancement}
 
@@ -218,8 +219,7 @@ Avant d'analyser le système en détails à l'aide du fichier csv fournit par no
 	\label{fig:GUI}
 \end{figure}
 
-Dans la communication TCP/IP, le serveur roule sur QNX et le client sur le GUI. Après avoir ouvert le GUI, il faut donc d'abord lancer la simulation QNX (qui va partir le serveur) et ensuite appuyer sur le bouton "Connect drone" pour établir la connexion. Le GUI, présenté à la Figure \ref{fig:GUI}, affiche les paramètres de base de la simulation, soit: la mémoire, le niveau de batterie, la position du drone (x, y) et son altitude (z). De plus, une vidéo montrant le GUI en fonction (i.e. la simulation en accélérée) est disponible au lien suivant: \href{https://drive.google.com/file/d/1W9yt0Z4YxCwr0TjXkgv12WVO9TSmWGtv/view?usp=sharing}{INF6600-GUI-DEMO}.
-
+Dans la communication TCP/IP, le serveur roule sur QNX et le client sur le GUI. Après avoir ouvert le GUI, il faut donc d'abord lancer la simulation QNX (qui va partir le serveur) et ensuite appuyer sur le bouton "Connect drone" pour établir la connexion. Le GUI, présenté à la Figure \ref{fig:GUI}, affiche les paramètres de base de la simulation, soit: la mémoire, le niveau de batterie, la position du drone (x, y) et son altitude (z). De plus, une vidéo montrant le GUI en fonction (i.e. la simulation en accélérée) est disponible: \href{https://drive.google.com/file/d/1W9yt0Z4YxCwr0TjXkgv12WVO9TSmWGtv/view?usp=sharing}{{\color{blue}INF6600-GUI-DEMO}}\cite{ref:video}.
 
 \section{Conclusion}
 Dans cet article, nous avons décrit les améliorations apportées à l'implémentation d'un système de contrôle de drone fermier. L'analyse du système de base a soulevé des lacunes importantes en ce qui concerne les visibilités de l'état du système et de la qualité de l'ordonnancement. En effet, ce manque d'informations rend l'analyse du système et de ses performances laborieuse pour ne pas dire impossible. 
@@ -278,9 +278,10 @@ Dernièrement, d'un point de vue sécurité pour une utilisation réelle du syst
 % (used to reserve space for the reference number labels box)
 \begin{thebibliography}{1}
 
-\bibitem{IEEEhowto:kopka}
-H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, 3rd~ed.\hskip 1em plus
-  0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
+\bibitem{ref:video}
+Ian Gagnon, Daniel Lussier-Lévesque, \emph{Demonstration du GUI pour drône},\newline
+https://drive.google.com/file/d/\newline
+1W9yt0Z4YxCwr0TjXkgv12WVO9TSmWGtv/view?usp=sharing.
 
 \end{thebibliography}
 
