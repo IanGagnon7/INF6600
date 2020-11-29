@@ -52,14 +52,13 @@
 
 \documentclass[journal]{IEEEtran}
 
-\usepackage{graphicx}
-
 
 % correct bad hyphenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
 
 \usepackage{graphicx}
 \usepackage{caption}
+\usepackage{hyperref} 
 
 \begin{document}
 
@@ -166,45 +165,86 @@ En plus d'affecter les performances du systèmes et de le rendre moins fiable, u
 
 Les pics des latences durent plusieurs millisecondes. Plusieurs tentatives de contourner le problème ont été essayé: réduire le nombre de cœurs du système de contrôle, augmenter le nombre de cœurs du système et déplacer la machine virtuelle du disque réseau au disque dur local. Déplacer la machine virtuelle à permis de réduire significativement la durée de ces pics, mais aucune des ces tentatives n'a permis de ramener les variations de latences à des temps raisonnables.
 
-\section{Améliorations apportées}
-\label{ameliorations}
+\section{Améliorations apportées}\label{ameliorations}
 \begin{figure}
 	\centering
 	\captionsetup{justification=centering}
-	\includegraphics[width=3.5in]{diagrammeDeTaches_Simple.pdf}
+	\includegraphics[width=\linewidth]{diagrammeDeTaches_Simple.pdf}
 	\caption{Diagramme de tâches du système}
 	\label{taskDiagram}
 \end{figure}
 
-Comme il est possible de le voir à la figure \ref{fig:ameliorations}, les améliorations ont été apportés au niveau du \textit{logging} et du \textit{monitoring} des tâches pour avoir des sorties de simulations faciles à interpréter et qui corrigent les deux premières lacunes décrites à la section \ref{lacunes}, le manque de lisibilité de ce qui se passe dans le système.
+Des lacunes présentées à la section précédente, les deux premières concernant la visibilité du système ont été identifiées comme prioritaires. 
+Pour y remédier, des améliorations sont proposées et illustrées à la Figure \ref{taskDiagram}. Un \textit{monitoring} des tâches récolte d'abord les métriques d'exécution pour chaque tâche, un module de \textit{logging} sert ensuite à regrouper les informations pour finalement les enregistrer en format csv. En supplément, un \textit{Graphical User Interface} (GUI) permet de suivre le déroulement de la simulation.
 
 \subsection{Monitoring des tâches}
 
-Pour chaque tâche qui s'exécute, une mesure du temps d'une exécution est faite à l'aide de \verb|std::chrono::steady_clock::now()|. Deux variables (atomiques) sauvegarde la valeur de la dernière exécution et le pire cas. Dans le cas de notre système, nous n'avons pas d'horloge permettant une granularité plus grande qu'une milliseconde.
+Pour chaque tâche qui s'exécute, le temps d'exécution est calculé en faisant la différence entre les temps initial et final obtenus par la fonction \verb|std::chrono::steady_clock::now()| et stockés dans des variables atomiques. Ainsi, la durée de la dernière exécution (\textit{last runtime}), le pire cas (WCET pour \textit{Worst-Case Execution Time}) et les échéances manquées (\textit{missed deadlines}) sont comptabilisés. Notons, que l'horloge du système, avec sa granularité d'une milliseconde, limite la précision des données.
 
 \subsection{Logging}
 
-Une fois que nous avons implanté le code pour avoir l'information dans des variables, il faut penser à un moyen de la communiquer. Il a donc fallu implémenter une nouvelle fonction (avec le code de \textit{monitoring} associé) pour lire l'ensemble des variable et les pousser vers les nouvelles sorties. Nous avons décider d'exécuter la tâche toutes les 100 millisecondes afin de ne pas surcharger le système. Cette fonction est appelée par la tâche de \textit{monitoring} déjà existante qui auparavant ne poussait les donnée que vers la console une fois toute les secondes.
+Une fois que nous avons implanté le code pour avoir l'information dans des variables, il faut penser à un moyen de la communiquer. Il a donc fallu implémenter une nouvelle fonction (avec le code de \textit{monitoring} associé) pour lire l'ensemble des variable et les transmettre vers les nouvelles sorties. Nous avons décider d'exécuter la tâche toutes les 100 millisecondes afin de ne pas surcharger le système. Cette fonction est appelée par la tâche de \textit{monitoring} déjà existante qui auparavant ne poussait les donnée que vers la console une fois toute les secondes.
 
 \subsection{Sortie en fichier csv}
 
-La sortie qui permet de faire une analyse compréhensive du système est un simple fichier csv qui est sauvegardé en mémoire non-volatile au fur et à mesure que la simulation avance (de sorte qu'un \textit{crash} peut être investigué en s'aidant du fichier). Le format csv étant supporté par pratiquement tous les outils d'analyse et de base de données, il est facile de s'en servir pour obtenir des statisques sur un grand nombre d'exécutions, de réaliser des analyses et des graphiques en Python, en R, en MATLAB ou tout simplement dans Microsoft Excel ou LibreOffice Calc.
-
+La sortie qui permet de faire une analyse compréhensive du système est un simple fichier csv qui est sauvegardé en mémoire non-volatile au fur et à mesure que la simulation avance. Le format csv étant supporté par pratiquement tous les outils d'analyse et de base de données, il est donc facile de s'en servir pour obtenir des statistiques sur un grand nombre d'exécutions pour ensuite les formater adéquatement en tableaux, en graphiques ou en générant un rapport (e.g. en JSON). En effet, que ce soit à l'aide de scripts (avec Python, R ou MATLAB) ou manuellement (avec Microsoft Excel ou LibreOffice Calc), l'analyse sera infiniment plus poussée que celle obtenue avec la sortie en console. De plus, cette approche permet d'étudier en détails les circonstances d'un \textit{crash}.
+ 
 \subsection{GUI}
+Un GUI a été implémenté en Python afin de suivre l'avancement de la simulation. Comme il s'agit d'une preuve de concept et que le focus de ce projet est l'implémentation sous QNX, l'interface graphique est limitée à un strict minimum (voir section~\nameref{resultats}). L'accent est plutôt mis sur le transfert de données. À cet égard, l'hypothèse (très réaliste) que le drone transmet ces images à la base via une connexion réseau est émise et cette connexion est exploitée pour établir la communication avec le GUI en utilisant un \textit{socket} internet avec le protocole TCP/IP. Comme il n'y a pas de \textit{End Of Transmission} (EOT) sur un \textit{socket}, une convention doit être choisie afin d'assurer un bon transfert de données: message d'une longueur fixe, message délimité (i.e. avec caractères spéciaux de début et fin) ou  message avec une entête indiquant sa longueur. Ici, pour garder le tout le plus simple possible, la longueur des paquets est fixée et des caractères de remplissage (i.e. des espaces) sont ajoutés à la fin des trames de données pour ajuster la taille des paquets. De plus, un délai sur la connexion, une gestion de déconnexion ainsi qu'un avertissement de fin de simulation sont ajoutés pour prévenir les erreurs et éviter les \textit{deadlocks}.
 
-\#TODO
+\section{Résultats}\label{resultats}
+
+\subsection{Analyse du système}
+Avant d'analyser le système en détails à l'aide du fichier csv fournit par nos améliorations, la fonctionnalité de l'implémentation de base est validée à la l'aide de l'image en sortie de la simulation générée par la fonction \textit{transmitPhotos()}. L'image agrandie (Figure \ref{fig:farmMap}) démontre effectivement que l'intégralité du champ 22, soit le champ balayé lors de la simulation, a été photographié.
 
 \begin{figure}
-  \includegraphics[width=\linewidth]{placeholder.png}
-  \caption{Le gui en action}
-  \label{fig:GUI}
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=1.8in]{farmMap.png}
+	\caption{Image agrandie de la zone couverte par le drone}
+	\label{fig:farmMap}
 \end{figure}
 
-\section{Résultats}
+
+\#TODO Parler des vrais résultats et mettre les graphiques
+
+
+\subsection{Description du GUI}
+\begin{figure}
+	\centering
+	\captionsetup{justification=centering}
+	\includegraphics[width=\linewidth]{GUI_image.png}
+	\caption{GUI durant la simulation}
+	\label{fig:GUI}
+\end{figure}
+
+Dans la communication TCP/IP, le serveur roule sur QNX et le client sur le GUI. Après avoir ouvert le GUI, il faut donc d'abord lancer la simulation QNX (qui va partir le serveur) et ensuite appuyer sur le bouton "Connect drone" pour établir la connexion. Le GUI, présenté à la Figure \ref{fig:GUI}, affiche les paramètres de base de la simulation, soit: la mémoire, le niveau de batterie, la position du drone (x, y) et son altitude (z). De plus, une vidéo montrant le GUI en fonction (i.e. la simulation en accélérée) est disponible au lien suivant: \href{https://drive.google.com/file/d/1TykhwoXcN0TIXLQbXhU5W53SE4xDp53J/view?usp=sharing}{INF6600-GUI-DEMO}.
 
 
 \section{Conclusion}
-The conclusion goes here.
+Dans cet article, nous avons décrit les améliorations apportées à l'implémentation d'un système de contrôle de drone fermier. L'analyse du système de base a soulevé des lacunes importantes en ce qui concerne les visibilités de l'état du système et de la qualité de l'ordonnancement. En effet, ce manque d'informations rend l'analyse du système et de ses performances laborieuse pour ne pas dire impossible. 
+
+Afin de pallier à ce manque de données, nous avons dans un premier temps implémenté un \textit{monitoring} des tâches avec un module de \textit{logging} permettant de recueillir de précieuses informations et de les enregistrer pour les analyser ultérieurement. Cela nous a permis d'étudier le système et de réaliser que...
+
+\#TODO Parler brièvement des conclusions de l'analyse
+
+Dans un second temps, nous avons ajouté un GUI communiquant avec le drone via une connexion réseau utilisant le protocole TCP/IP. Ce dernier affiche l'état du système durant la simulation et aide l'utilisateur à repérer un comportement inattendu du drone. Dans l'optique d'un déploiement réel du système sur une ferme, cette interface graphique roulant au niveau de la base (vraisemblablement la maison du fermier) s'avérerait utile puisqu'elle permettrait au fermier du suivre le drone lors de sa mission et de réagir en cas de problèmes.
+
+\vspace{2mm}
+
+Cependant, les améliorations apportées ont des limites...
+
+
+\vspace{2mm}
+Il y a plusieurs directions pour les travaux futurs. Premièrement, il serait intéressant d'analyser les performances du système en utilisant plus de \textit{cores} (8 par exemple). Une telle parallélisation des tâches, si bien réalisée, pourrait considérablement augmenter la rapidité du système.
+
+Deuxièmement, la sécurité du système pourrait être rehaussée par l'utilisation de partitions. En isolant les processus de cette manière, on éviterait que la défaillance d'une tâche fasse planter tout le système. Par exemple, une erreur du système de communication n'aurait aucun impact sur le système de navigation, ce qui n'est pas une certitude présentement.
+
+Dernièrement, d'un point de vue sécurité pour une utilisation réelle du système, il serait pertinent d'ajouter un bouton d'urgence à l'interface graphique pour arrêter le drone de force ou le ramener immédiatement à la base dans le cas où l'algorithme de contrôle aurait un raté (e.g. un mauvais calcul qui enverrait le drone à 1000 m d'altitude). 
+
+
+
+
 
 
 
